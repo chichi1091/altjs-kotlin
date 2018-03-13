@@ -10,6 +10,7 @@ buildscript {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 		classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
 		classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
+        classpath("org.jetbrains.kotlin:kotlin-stdlib-js:${kotlinVersion}")
 	}
 }
 
@@ -32,21 +33,22 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
 sourceSets {
     main.java.srcDirs += 'src/main/java'
-    main.kotlin.srcDirs += 'src/main/kotlinjs'
+    main.kotlin.srcDirs += 'src/main/kotlin'
 }
+
+def outputDir = "${projectDir}/src/resources/static/js"
 compileKotlin2Js {
     kotlinOptions.metaInfo = true
+    kotlinOptions.outputFile = "${outputDir}/altjs-kotlin.js"
 }
 
 repositories {
 	mavenCentral()
 }
 
-
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 	compile('org.springframework.boot:spring-boot-starter-web')
-	compile('com.fasterxml.jackson.module:jackson-module-kotlin')
 	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     compile("org.jetbrains.kotlin:kotlin-stdlib-js")
 	compile("org.jetbrains.kotlin:kotlin-reflect")
@@ -55,21 +57,3 @@ dependencies {
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
 
-task assembleWeb(type: Sync) {
-    configurations.compile.each { File file ->
-        from(zipTree(file.absolutePath), {
-            includeEmptyDirs = false
-            include { fileTreeElement ->
-                def path = fileTreeElement.path
-                path.endsWith(".js") && (path.startsWith("META-INF/resources/") ||
-                        !path.startsWith("META-INF/"))
-            }
-        })
-    }
-    from compileKotlin2Js.destinationDir
-    into "${projectDir}/web"
-
-    dependsOn classes
-}
-
-assemble.dependsOn assembleWeb

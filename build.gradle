@@ -36,7 +36,8 @@ sourceSets {
     main.kotlin.srcDirs += 'src/main/kotlin'
 }
 
-def outputDir = "${projectDir}/src/resources/static/js"
+//def outputDir = "${projectDir}/src/main/resources/static/js"
+def outputDir = "${projectDir}/build/js"
 compileKotlin2Js {
     kotlinOptions.metaInfo = true
     kotlinOptions.outputFile = "${outputDir}/altjs-kotlin.js"
@@ -44,6 +45,9 @@ compileKotlin2Js {
 
 repositories {
 	mavenCentral()
+    flatDir {
+        dirs '../altjs-kolin/build/libs'
+    }
 }
 
 dependencies {
@@ -52,8 +56,25 @@ dependencies {
 	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     compile("org.jetbrains.kotlin:kotlin-stdlib-js")
 	compile("org.jetbrains.kotlin:kotlin-reflect")
+    compile("com.example:altjs-kotlin:0.0.1-SNAPSHOT")
 	runtime('org.springframework.boot:spring-boot-devtools')
 	compileOnly('org.projectlombok:lombok')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
 
+build.doLast() {
+    // Copy *.js from jar into build directory
+    configurations.compile.each { File file ->
+        copy {
+            includeEmptyDirs = false
+
+            from zipTree(file.absolutePath)
+            into outputDir
+            include '**/*.js'
+            eachFile { details ->
+                def names = details.path.split('/')
+                details.path = names[names.length - 1]
+            }
+        }
+    }
+}
